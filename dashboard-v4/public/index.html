@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Dashboard v4</title>
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<!-- ============== LOGIN VIEW ============== -->
+<div id="loginView" class="auth-view">
+  <div class="auth-card">
+    <h1>⚡ Claude Dashboard</h1>
+    <p class="auth-subtitle" id="authSubtitle">Connexion</p>
+
+    <form id="loginForm">
+      <div class="form-row">
+        <label>Username</label>
+        <input type="text" id="loginUsername" required autofocus>
+      </div>
+      <div class="form-row">
+        <label>Password</label>
+        <input type="password" id="loginPassword" required>
+      </div>
+      <div class="form-row" id="displayNameRow" style="display:none;">
+        <label>Nom d'affichage</label>
+        <input type="text" id="loginDisplayName">
+      </div>
+      <div id="loginError" class="error-msg"></div>
+      <button type="submit" class="send-btn" id="loginBtn">Se connecter</button>
+      <p class="auth-toggle" id="authToggle"></p>
+    </form>
+  </div>
+</div>
+
+<!-- ============== APP VIEW ============== -->
+<div id="appView" style="display:none;">
+  <header>
+    <div>
+      <h1>⚡ Claude Dashboard</h1>
+      <div class="live"><span class="live-dot"></span><span id="liveStatus">En direct</span></div>
+    </div>
+    <div class="user-info">
+      <div class="user-avatar" id="userAvatar"></div>
+      <div>
+        <div class="user-name" id="userName"></div>
+        <button class="action-btn" id="logoutBtn">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Target selector -->
+    <div class="target-zone">
+      <div class="target-label">🎯 Piloter :</div>
+      <select id="targetSelect"></select>
+      <button class="action-btn" id="newAgentBtn">➕ Nouvel agent (mon PC)</button>
+    </div>
+
+    <!-- Agent's queue -->
+    <div class="queue-zone" id="queueZone" style="display:none;">
+      <div class="queue-header">
+        <span>🚀 File d'attente sur <span id="queueAgentName"></span></span>
+        <button class="action-btn danger" id="queueClearBtn">Vider</button>
+      </div>
+      <div id="queueList"></div>
+    </div>
+
+    <!-- Send instruction -->
+    <div class="input-zone">
+      <div class="input-header">
+        <span class="input-label">💬 Envoyer une instruction</span>
+      </div>
+      <div class="input-row">
+        <textarea id="instruction" placeholder="Tape ton instruction... (Cmd+Enter pour envoyer)" rows="2"></textarea>
+        <button id="sendBtn" class="send-btn">Envoyer ↑</button>
+      </div>
+      <div id="sendStatus" class="send-status"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" data-tab="timeline">📋 Timeline</div>
+      <div class="tab" data-tab="agents">🖥 Agents</div>
+      <div class="tab" data-tab="team">👥 Équipe</div>
+      <div class="tab" data-tab="account">⚙️ Mon compte</div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="tab-content active" id="tab-timeline">
+      <div class="timeline" id="timeline"></div>
+    </div>
+
+    <!-- Agents -->
+    <div class="tab-content" id="tab-agents">
+      <h3 style="margin-bottom:12px">🖥 Mes agents (PCs)</h3>
+      <p class="hint">Un agent = un PC qui peut être piloté à distance. Crée un agent par poste, installe le script `agent.js` dessus avec le token fourni.</p>
+      <div id="myAgentsList"></div>
+    </div>
+
+    <!-- Team -->
+    <div class="tab-content" id="tab-team">
+      <h3 style="margin-bottom:12px">👥 Équipe</h3>
+      <p class="hint">Tu peux piloter le PC de n'importe quel coéquipier en sélectionnant son agent dans le sélecteur de cible en haut.</p>
+      <div id="teamList"></div>
+    </div>
+
+    <!-- Account -->
+    <div class="tab-content" id="tab-account">
+      <h3 style="margin-bottom:12px">⚙️ Mon compte</h3>
+      <div class="form-row">
+        <label>Nom d'affichage :</label>
+        <input type="text" id="accDisplayName">
+      </div>
+      <div class="form-row">
+        <label>Couleur :</label>
+        <input type="color" id="accColor">
+      </div>
+      <button class="send-btn" id="accSaveBtn">💾 Sauvegarder profil</button>
+
+      <hr style="margin:24px 0;border-color:var(--border)">
+
+      <h3>🔑 Changer le password</h3>
+      <div class="form-row">
+        <label>Nouveau password :</label>
+        <input type="password" id="accNewPassword">
+      </div>
+      <button class="send-btn" id="accPasswordBtn">🔒 Changer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle">Confirmation</div>
+    <div class="modal-body" id="modalBody">Es-tu sûr ?</div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="modalCancel">Annuler</button>
+      <button class="modal-btn danger" id="modalConfirm">Confirmer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal nouvel agent -->
+<div class="modal-overlay" id="newAgentModal">
+  <div class="modal">
+    <div class="modal-title">➕ Créer un nouvel agent</div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px">Donne un nom à ce PC (ex: "Mac Pro Mael", "Bureau", "Mac Mini Studio").</p>
+      <input type="text" id="newAgentName" placeholder="Nom du PC" style="width:100%;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-family:inherit">
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="newAgentCancel">Annuler</button>
+      <button class="modal-btn danger" id="newAgentCreate" style="background:var(--accent);border-color:var(--accent)">Créer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal token -->
+<div class="modal-overlay" id="tokenModal">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-title">🔑 Token d'agent</div>
+    <div class="modal-body">
+      <p style="margin-bottom:12px">Voici la commande à lancer sur le PC <b id="tokenAgentName"></b> :</p>
+      <pre id="tokenSetupCmd" style="background:var(--bg-input);padding:12px;border-radius:8px;overflow:auto;font-size:11px;font-family:'Courier New',monospace;color:var(--text-2);white-space:pre-wrap;word-break:break-all"></pre>
+      <p class="hint" style="margin-top:12px">⚠️ Garde ce token secret. Il permet de piloter ton PC.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-btn" id="tokenCopy">📋 Copier la commande</button>
+      <button class="modal-btn" id="tokenClose">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script src="/modules/state.js"></script>
+<script src="/modules/api.js"></script>
+<script src="/modules/toast.js"></script>
+<script src="/modules/auth.js"></script>
+<script src="/modules/ws.js"></script>
+<script src="/modules/agents.js"></script>
+<script src="/modules/timeline.js"></script>
+<script src="/modules/team.js"></script>
+<script src="/modules/account.js"></script>
+<script src="/app.js"></script>
+</body>
+</html>

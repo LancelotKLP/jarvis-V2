@@ -1,0 +1,14 @@
+{
+  "name": "claude-dashboard-v4",
+  "version": "4.0.0",
+  "description": "Dashboard multi-user pour Claude Code",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "agent": "node agent/agent.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0"
+  }
+}
